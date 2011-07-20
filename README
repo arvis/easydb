@@ -1,0 +1,22 @@
+
+Easydb is simple web application creator.
+In  three words it can be described MS Access as web application.
+Current goal is to implement it as Facebook application.
+
+I started this project three years ago, but struggled with right look and usability.
+I hope I can get this right this time.
+You can get previous code of EasyDB at http://www.assembla.com/wiki/show/easydb/
+
+Dependencies:
+Amazon SimpleDb PHP SDK ()
+ExtJS 3
+
+Install:
+checkout from gitHub
+get Amazon SimpleDb PHP SDK and install it on [DOCUMENT_ROOT]/sdk
+setup Amazon SimpleDb PHP SDK by setting your credentials
+get ExtJs 3 (I currently use ext-3.3.1 ) from ExtJS website and put it into [DOCUMENT_ROOT]/extjs
+
+Licence:
+EasyDb is licenced under GPL3 licence.
+Icons are from KDE Crystal theme.
