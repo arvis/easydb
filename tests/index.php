@@ -2,7 +2,7 @@
 
 require '../settings.php';
 
-require BASE_DIR.'/simpledb.php';
+//require BASE_DIR.'/simpledb.php';
 require BASE_DIR.'/model.php';
 
 require '../../simplephptest/basictest.php';
@@ -81,38 +81,63 @@ class TestBasicModel{
 		return $result==1;
 	}
 */	
-	function testEditTableData(){
+	function testEditTable(){
 		$table_name="my test table ".uniqid();
-		$result=$this->model->editTable(1,$table_name,1);
+		$table_id=1;
+		$result=$this->model->editTable($table_id,1,$table_name);
 		return $result==1;
 	}
 	
-	function testDeleteTable(){
-		$result=$this->model->dropTable(1);
+	
+	function testeditTableField_create(){
+		//($table_id,$uid,$field_id,$field_name,$field_type)
+		$field_id=false;
+		
+		$user_data['uid']=1;
+		$user_data['table_id']= 1;
+		$user_data['name']= "test_field";
+		$user_data['field_header']= "test field";
+		$user_data['field_type']= "text";
+		
+		
+		//$result=$this->model->editTableField($field_id,1,1,"my test","text");
+		$result=$this->model->editTableField($field_id,$user_data);
 		return $result==1;
 	}
 	
-	function testCreateFieldsConfig(){
+	function testEditTableField_edit(){
 		//($table_id,$uid,$field_id,$field_name,$field_type)
-		$result=$this->model->createTableField(1,1,"my test","text");
-		return $result==1;
-	}
-	function testEditFieldsConfig(){
-		//($table_id,$uid,$field_id,$field_name,$field_type)
-		$result=$this->model->editTableField(1,1,1,"my test edit","text");
+
+		$field_id=1;
+		$user_data['uid']=1;
+		$user_data['id']=1;
+		$user_data['table_id']= 1;
+		$user_data['data_index']= "test_field";
+		$user_data['header']= "test field edited";
+		$user_data['field_type']= "text";
+
+		$result=$this->model->editTableField($field_id,$user_data);
 		return $result==1;
 	}
 	
 	function testSelectAllFromTable(){
-		$result=$this->model->selectAll(1);
-		//print_r($result);
+		//$result=$this->model->selectAllFromTable("table_id",1);
+		$result=$this->model->selectAllFromTable(1,1);
 		
 		return $result['1']['id']==1;
 	}
+
+	function testDeleteTable(){
+		$result=$this->model->dropTable(1);
+		return $result==1;
+	}
+
 	
 	function testInsertRow(){
 		$row_data=array();
-		$row_data['name']="test1".uniqid();
+		$row_data['value']="test1".uniqid();
+		$row_data['table_id']=1;
+		
 		$result=$this->model->insertRow(1,$row_data);
 		
 		return $result==1;
@@ -121,35 +146,30 @@ class TestBasicModel{
 	function testEditRow(){
 		$row_data=array();
 		
-		$row_data['name']="test edited ".uniqid();
+		$row_data['value']="test edited ".uniqid();
 		$result=$this->model->editRow(1,1,$row_data);
+		$row_data['table_id']=1;
+
 		return $result==1;
 	}
 	
-	function testGetTableCount(){
-		$result=$this->model->getTableCount(1);
-		return $result==1;
+	
+	function testGetTableList(){
+		$result=$this->model->getTableList(1);
+		return $result['1']['table_id']=='1';
 	}
+	
 	
 	function testGetTableColumnData(){
 		// get all columns for this table
 		$result=$this->model->getColumnData(1);
-		return $result==1;
-	
+		return $result['1']['table_id']=='1';
 	}
+
 	
 	function testDeleteRow(){
 		return -1;
 	}
-	
-	function testCanCreateTable(){
-		return -1;
-	}
-	
-	function testCanAddRow(){
-		return -1;
-	}
-	
 	
 	
 }

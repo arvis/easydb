@@ -1,5 +1,60 @@
 Ext.onReady(function(){
     Ext.QuickTips.init();
+	var tb = new Ext.Toolbar({width: 650});
+
+	var store;
+	
+    store = new Ext.data.ArrayStore({
+        //fields: [{name: 'id'}]
+        fields: []
+    });
+	
+	var storeFields=[];
+	
+
+	function setJsonStore(table_id){
+		//FIXME: for testing
+		var store_params={grid_action:'get_table_data',table_id:table_id};
+		// FIXME: move to another location 
+		
+		//grid_cols=[];
+		store = new Ext.data.JsonStore({
+				url:  'view.php',
+				root: 'data',
+				idProperty: 'id',
+				baseParams:	store_params,
+				autoLoad:false,
+				
+				//fields: [{name: 'id'}]
+				fields: storeFields
+		});	
+		
+		return true;
+	}
+/*
+	setJsonStore();
+	store.load();
+	store.on('load', function(){console.log("new count is "+store.getCount()); gridPanel.doLayout();});
+*/
+	
+
+	var fieldPropsWindow;
+	var gridPropsWindow;
+	var col_count=1;
+	var gridPanel;	
+	var formPanel;
+	var tableListMenu;
+	
+	var grid_cols=[
+/*	
+		{
+		header:'id',
+		dataIndex:'id',
+		}
+*/		
+        ];
+	
+	
 
 	Ext.override(Ext.data.Store,{
 		addField: function(field){
@@ -25,6 +80,7 @@ Ext.onReady(function(){
 	});
 	Ext.override(Ext.grid.ColumnModel,{
 		addColumn: function(column, colIndex){
+			console.log("addColumn 1 ");
 			if(typeof column == 'string'){
 				column = {header: column, dataIndex: column};
 			}
@@ -47,6 +103,7 @@ Ext.onReady(function(){
 	});
 	Ext.override(Ext.grid.GridPanel,{
 		addColumn: function(field, column, colIndex){
+			console.log("addColumn 2 ");
 			if(!column){
 				if(field.dataIndex){
 					column = field;
@@ -69,19 +126,6 @@ Ext.onReady(function(){
 		}
 	});
 	
-
-    // create the data store
-    var store = new Ext.data.ArrayStore({
-        //fields: [{name: 'id'}]
-        fields: []
-    });
-
-	var fieldPropsWindow;
-	var gridPropsWindow;
-	var col_count=1;
-	var gridPanel;	
-	var formPanel;
-	
 	
 	function getFormPropsPanel(){
 		var fieldTypeCombo = new Ext.form.ComboBox({
@@ -101,7 +145,7 @@ Ext.onReady(function(){
 			value:'text',
 			triggerAction: 'all',
 			emptyText:'Select data type...',
-			selectOnFocus:true,
+			selectOnFocus:true
 		});
 
 		
@@ -156,7 +200,7 @@ Ext.onReady(function(){
 				text: 'Save',
 				cls: 'x-btn-text-icon',
 				icon: 'images/save_all_16.png',		
-				handler: saveData,
+				handler: saveData
 			},
 			{
 				text: 'Delete Row',
@@ -170,18 +214,12 @@ Ext.onReady(function(){
 				iconCls: 'silk-info',
 				handler: showHelp,
 				scope: this
-			},
-			],
+			}
+			]
 		});
 		return designGrid;
 	}
 	
-	
-	function showHelp(){
-
-		//Ext.MessageBox.show('Help system','Not yet implemented.".');
-		//alert("Not yet implemented.");
-	}
 	
 	
 	function getGridViewGrid(grid_store){
@@ -204,7 +242,7 @@ Ext.onReady(function(){
 				text: 'Save',
 				cls: 'x-btn-text-icon',
 				icon: 'images/save_all_16.png',		
-				handler: saveData,
+				handler: saveData
 			},
 			{
 				text: 'Delete Row',
@@ -218,13 +256,21 @@ Ext.onReady(function(){
 				iconCls: 'silk-info',
 				handler: showHelp,
 				scope: this
-			},
+			}
 			
-			],
+			]
 		});
 		return gridView;
 	}
 
+	function showHelp(){
+
+		//Ext.MessageBox.show('Help system','Not yet implemented.".');
+		//alert("Not yet implemented.");
+	}
+	
+	
+	
 	function showGridPropsWindow(){
 	
         if(!gridPropsWindow){
@@ -331,47 +377,44 @@ Ext.onReady(function(){
 		//return fieldPropsWindow;
 	}
 
-	
-	var grid_cols=[
-/*	
-            {
-                id       :'id',
-                header   : 'ID', 
-                width    : 60, 
-                sortable : true, 
-				//editor: new fm.TextField({allowBlank: false}),
-                dataIndex: 'id'
-            }
-*/			
-        ];
-	
-	function addCol(field_header, field_type){
+	function getFieldEditor(field_type){
 		var grid_field;
-		
 		if (field_type=="text") grid_field=new Ext.form.TextField();
 		else if (field_type=="date") grid_field=new Ext.form.DateField();
 		else if (field_type=="number") grid_field=new Ext.form.NumberField();
 		
+		return grid_field;
+	
+	}
+
+	
+	function addCol(field_header, field_type,field_id, start_edit){
+		var grid_field;
 		
-		var field_id="field_"+col_count;
+		if ( start_edit === undefined ) {
+		start_edit = true;
+		}
+		
+		grid_field=getFieldEditor(field_type);
+
+		if (field_id==undefined) 
+			field_id="field_"+col_count;
+			
 		gridPanel.addColumn({name: field_id}, {header: field_header,editor: grid_field, dataIndex: field_id});
-		if (gridPanel.getStore().getCount()<1) addRow();
+		if (start_edit && gridPanel.getStore().getCount()<1) addRow();
+		
+		storeFields.push({name:field_id,type:field_type});
 		
 		gridPanel.stopEditing();
 		gridPanel.doLayout();
 		
-		//console.log("row id "+gridPanel.getStore().getCount()+" col "+col_count );
-		gridPanel.startEditing(gridPanel.getStore().getCount()-1, col_count-1);
+		//FIXME: removed for now
+		if (start_edit) gridPanel.startEditing(gridPanel.getStore().getCount()-1, col_count-1);
 		//gridPanel.startEditing(0, 0);
 		col_count=col_count+1;
 		
 	}
 	
-	
-	function showTableList(){
-	
-	
-	}
 	
 	function addRow(){
 		var u = new store.recordType({});
@@ -392,66 +435,181 @@ Ext.onReady(function(){
 		}
 		]
 	});
-
+	
 	//var menu = new Ext.menu.Menu({});
 	
-	function onGridColumnSave(){
+	function onGridColumnSave(grid_to_save){
 		console.log("start saving grid data");
 		
 		//TODO: write unit tests for this option
-		var colModel=gridPanel.getColumnModel();
-		var colCount=colModel.getColumnCount();
+		var colModel=grid_to_save.getColumnModel();
 		
-		var storeData=gridPanel.getStore().fields;
-		console.log("col count is "+colModel.getColumnCount());
+		var storeData=grid_to_save.getStore().fields;
 		
 		var columnConfigs=new Array();
 		
 		for (var i=0;i<colModel.getColumnCount();i++){
 			var colData={};
-			colData['id']=colModel.getColumnId(i);
+			colData['id']=0;//colModel.getColumnId(i);
 			colData['header']=colModel.getColumnHeader(i);
 			colData['col_width']=colModel.getColumnWidth(i);
 			colData['data_index']=colModel.getDataIndex(i);
 			colData['field_type']=storeData.items[i].type.type;
 			//TODO: setting additional data for columnd data
-			console.log("col data is "+colData['header'] );
 			
 			columnConfigs.push(colData);
 			
 		}
 		
-		console.log(" initial data 2 is "+columnConfigs[0]['header'] );
-
-/*		
-		var myArray = new Array();
-		myArray[0] = "Football";
-		myArray[1] = "Baseball";
-		myArray[2] = "Cricket";
-		myArray['aaaa'] = "zebra";
-		var foodJson = Ext.encode(myArray);
-		console.log("json arr "+foodJson);
-*/		
-		
 		var coldDataJSON=Ext.encode(columnConfigs);
-		console.log("JSON is "+coldDataJSON+" initial data is "+columnConfigs[0]['header'] );
+		//console.log("JSON is "+coldDataJSON+" initial data is "+columnConfigs[0]['header'] );
 		
 		//sending columnd data to server
-	Ext.Ajax.request
-	({
-		url:'view.php',
-		method:'POST',
-			params:{columns:coldDataJSON, grid_action:'save_grid_config'},
-			success:function(response, opts)
-			{
-				
-			}
-	});
+		var success_funct=function(response, opts){
+		
+		};
+		
+		var grid_data=Ext.encode({id:1,grid_name:'my grid'});
+
+		var grid_params={columns:coldDataJSON, grid_action:'set_table_data', grid_data:grid_data};
+		
+		sendToServer(grid_params,success_funct,null);
+		
+		return true;
+	}
+
 	
+	function changeTable(table_id){
+		console.log("changeTable table id is "+table_id);
 	
+		//check if there is unsaved changes
+		
+		// get field config from server and apply to grid
+		// get data from server and apply to grid
 	
 	
 	}
+	
+	
+	function newTable(){
+		console.log("new table function");
+	}
+	
+	function startPage(){
+		console.log("start page function");
+	}
+	
+	
+
+	function getTableProperties(table_id){
+	
+	}
+
+	function getTableFields(table_id){
+		var grid_params={grid_action:'get_table_fields',table_id:table_id};
+		
+		var success_funct=function(response, opts){
+			var responseJSON = Ext.decode(response.responseText);
+				
+				if(responseJSON['success']){
+					var data=responseJSON['data'];
+					
+					grid_cols=[{name:'id',dataIndex:'id'},{name:'uid',dataIndex:'uid'} ];
+					storeFields=[{name:'id'},{name:'uid'} ];
+					
+					//grid_field=getFieldEditor(field_type);
+
+					
+					for(var prop in data) {
+						if(data.hasOwnProperty(prop)){
+							console.log("col data is "+data[prop]['header']+" id " +data[prop]['id']);
+							grid_cols.push({name:data[prop]['id'], dataIndex:data[prop]['id'], editor:getFieldEditor(data[prop]['field_type']), header:data[prop]['header'] });
+							storeFields.push({name:data[prop]['id'], type: data[prop]['field_type']});
+						}	
+					}
+					
+					//storeFields=[{name:'4e2b228b73f07'}];
+					setJsonStore(table_id);	
+					store.load({callback:function(){console.log("new count is add "+store.getCount()); onGridViewClick();}});
+					
+					
+				 
+				}
+				else {
+					//no valid data
+					return;
+				}
+		};
+		
+		sendToServer(grid_params,success_funct,null);
+	}
+	
+	function getTableData(table_id){
+		store.load();
+	}
+	
+
+
+
+	function getTableList(){
+		var success_funct=function(response, opts){
+			var responseJSON = Ext.decode(response.responseText);
+				
+				if(responseJSON['success']){
+					var gridList=responseJSON['data'];
+					
+					for(var prop in gridList) {
+						if(gridList.hasOwnProperty(prop)){
+							//console.log(gridList[prop]['table_name']);
+							tableListMenu.add({
+								text: gridList[prop]['table_name'] ,
+								id: gridList[prop]['id'] ,
+								width: 'auto',
+
+								tooltip: gridList[prop]['table_name']
+							});
+						}	
+					}
+					
+/*					
+					for(var i=0; i<gridList.length; i++) {
+						console.log("table name is "+ gridList[i]['table_name']);
+						tableListMenu.add({
+							text: gridList[i]['table_name'] ,
+							width: 'auto',
+							tooltip: gridList[i]['table_name']
+						});
+					}
+*/					
+					tb.doLayout();
+				
+				}
+				else {
+					//no valid data
+					return;
+				}
+				
+
+			
+		};
+		
+		var grid_params={grid_action:'get_table_list'};
+		sendToServer(grid_params,success_funct,null);
+	
+	}
+	
+	function sendToServer(grid_params,success_funct, failure_funct){
+		Ext.Ajax.request
+		({
+			url:'view.php',
+			method:'POST',
+			params:grid_params, //{columns:data_to_send, grid_action:grid_action},
+			success:success_funct
+			
+		});
+	
+	}
+
 	
 	function onGridProperties(){
 	
@@ -459,7 +617,7 @@ Ext.onReady(function(){
 
 	function saveData(){
 		//saving grid configuration, if in design mode
-		onGridColumnSave();
+		onGridColumnSave(gridPanel);
 		//saving grid data
 		
 		
@@ -467,7 +625,6 @@ Ext.onReady(function(){
 	}
 	
 	
-	var tb = new Ext.Toolbar({width: 650});
 
 	function onDesignViewClick(){
 		changeView("design");
@@ -478,7 +635,8 @@ Ext.onReady(function(){
 	}
 	
 	function changeView(view_type){
-		
+		gridPanel.stopEditing();
+
 		var button_text="View Type";
 		if (view_type=="grid"){
 			button_text="Grid view";
@@ -553,6 +711,28 @@ Ext.onReady(function(){
 	);
 	
 	//adding grid list
+	tableListMenu=new Ext.menu.Menu({
+		plain: true,
+		items: [
+			{
+				text:'New table...',
+				iconCls: 'add',
+				name:'new_table',
+				id:'new_table',
+				handler: startPage,
+				width: 'auto'
+			},
+			{
+				text:'Starter page',
+				iconCls: 'add',
+				name:'start_page',
+				id:'start_page',
+				handler: startPage,
+				width: 'auto'
+			}
+			]
+	});
+	
 	
     tb.add({
 			name:'grid_list',
@@ -562,52 +742,63 @@ Ext.onReady(function(){
 			cls: 'x-btn-text-icon',
 			icon: 'images/folder_blue.png',		
 			scale: 'large',
-
-            menu: {
-                xtype: 'menu',
-                plain: true,
-                items: [
-					{
-						text:'Sample grid 1',
-                        width: 'auto',
-                        tooltip: 'Sample grid 1'
-                    },
-					{
-						text:'Sample grid 2',
-                        iconCls: 'add',
-                        width: 'auto',
-						tooltip: 'Sample grid 2'
-                    },
-					{
-						text:'New table...',
-                        iconCls: 'add',
-                        width: 'auto',
-						tooltip: 'New table'
-                    },
-					{
-						text:'Starter page',
-                        iconCls: 'add',
-                        width: 'auto',
-						tooltip: 'Starter page'
-                    },
-					]
-                }
-            }
+            menu: tableListMenu
 			
-			);
+	});
 		
-    // create the Grid
+		
+	function onTableListClick(local_menu,menuItem, e){
+		var tableId=menuItem.getItemId();
+		
+		
+		//TODO: prevent continuing event from handlers
+		// if this is not table names, do nothing
+		if (tableId=="start_page" || tableId=="new_table" ) return;
 	
+		//console.log("onTableListClick "+ menuItem.getItemId());
+		
+		//reseting grid
+		//TODO: move it to another function
+		
+		
+		var store_params={grid_action:'get_table_data',table_id:tableId};
+		
+		//grid_cols=[];
+		store = new Ext.data.JsonStore({
+				url:  'view.php',
+				root: 'data',
+				idProperty: 'id',
+				baseParams:	store_params,
+				autoLoad:false,
+				
+				//fields: [{name: 'id'}]
+				//fields: [{name: 'id'},{name: '4e2b228b73f07'}]
+				fields: []
+			});	
+
+		
+		grid_cols=[];
+		getTableFields(tableId);
+
+		
+		//getTableData(tableId);
+
+		
+	} 	
+	
+	//setting on click event for table list
+	tableListMenu.on('click', onTableListClick);
 	
 	gridPanel=getDesignViewGrid(store);
-	// TODO: check if there is any rows in store, and if there is none, add one row 
-	//addRow();
+	getTableList();	
 	
-    // render the grid to the specified div in the page
-    //addRow();
 	
 	formPanel=new Ext.form.FormPanel({frame:false,width:650});
 	formPanel.add(gridPanel);
+	
+	
+	
+	
 	
 	formPanel.render('main_grid');
 	tb.render('main_toolbar');

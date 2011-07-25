@@ -1,4 +1,5 @@
 <?php
+require 'simpledb.php';
 
 
 class EasyDbModel {
@@ -21,7 +22,14 @@ class EasyDbModel {
 		if (!empty($users_domain_in)) $this->users_domain=$users_domain_in;
 	}
 
-
+	function setDomains($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in=""){
+		if (!empty($tables_domain_in)) $this->tables_domain=$tables_domain_in;
+		if (!empty($fields_domain_in)) $this->fields_domain=$fields_domain_in;
+		if (!empty($data_domain_in)) $this->data_domain=$data_domain_in;
+		if (!empty($users_domain_in)) $this->users_domain=$users_domain_in;
+	}
+	
+	
 	/**
 	gets users data from database
 	@param uid- user id
@@ -58,8 +66,13 @@ class EasyDbModel {
 	edits  table or creates it if id does not exist
 	@return 1 if success
 	*/
-	function editTable($table_id, $table_name,$uid){
+	function editTable(&$table_id,$uid,$table_name){
 		try {
+		
+			error_log("starting  editTable");
+			if (empty($table_id)) $table_id=uniqid();
+			
+		
 			$user_data=array();
 			$user_data['uid']=$uid;
 			$user_data['id']=$table_id;
@@ -67,6 +80,8 @@ class EasyDbModel {
 			
 			$response=$this->sdb->editItem($table_id,$user_data,$this->tables_domain);
 			//$user_data=$this->sdb->edit_item('1_1');
+			error_log("response from simpledb is ".$response);
+			
 					
 			return $response;
 		} catch (Exception $e) {
@@ -76,6 +91,8 @@ class EasyDbModel {
 		}
 		
 	}
+	
+	
 	function createTableField($table_id,$uid,$field_name,$field_type){
 		$field_id=uniqid();
 		$result=$this->editTableField($table_id,$uid,$field_id,$field_name,$field_type);
@@ -86,17 +103,20 @@ class EasyDbModel {
 	/**
 	edits or inserts (if not exists) field configuration data for specified table
 	*/
-	function editTableField($table_id,$uid,$field_id,$field_name,$field_type){
-		$user_data=array();
+	//function editTableField($table_id,$uid,$field_id,$field_name,$field_header,$field_type){
+	function editTableField($table_id,$user_data){
+		//$user_data=array();
 		
-		$user_data['uid']=$uid;
+		if (empty($field_id))
+			$field_id=uniqid();
+		else
+			$field_id=$user_data['id'];
+		
 		$user_data['id']=$field_id;
-		$user_data['table_id']= $table_id;
-		$user_data['name']= $field_name;
-		$user_data['field_type']= $field_type;
+		$user_data['table_id']=$table_id;
 		
 		$result=$this->sdb->editItem($field_id,$user_data,$this->fields_domain);
-		//$user_data=$this->sdb->edit_item('1_1');
+		
 		return $result;
 	}
 	
@@ -111,17 +131,27 @@ class EasyDbModel {
 		return $result;
 	}
 	
-	function getColumnData($table_id){
-		//SELECT id,field_caption,field_type FROM `easydb_fields_test` where table_id='1'
-		$sql="SELECT uid FROM `".$this->fields_domain."` where table_id='$table_id'";
+	function getTableList($uid){
+		$sql="SELECT * FROM `".$this->tables_domain."` where uid='$uid'";
 		$result=$this->sdb->customSelect($sql);
 		return $result;
-
 	}
 	
-	function selectAllFromTable($table_id){
+	function getTableFields($table_id){
+		//SELECT id,field_caption,field_type FROM `easydb_fields_test` where table_id='1'
+		$sql="SELECT * FROM `".$this->fields_domain."` where table_id='$table_id'";
+		$result=$this->sdb->customSelect($sql);
+		return $result;
+	}
+	
+	//function selectAllFromTable($var_name, $table_id){
+	function selectAllFromTable($table_id,$uid){
+	
 		//TODO: prevent SQL injections
-		$table_id=addslashes($table_id);
+		// escape characters
+		$table_id=$this->custom_escape_string($table_id);
+		
+		//$sql="SELECT * FROM `".$this->data_domain."` where $var_name='$table_id'";
 		$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
 		$result=$this->sdb->customSelect($sql);
 		return $result;
@@ -131,7 +161,6 @@ class EasyDbModel {
 		$result=$this->sdb->selectItem($row_id,$this->data_domain );
 		return $result;
 	}
-	
 	
 	function insertRow($uid, $row_data){
 		$row_id=uniqid();
@@ -151,5 +180,24 @@ class EasyDbModel {
 		return -1;
 	}
 
+	public function custom_escape_string($data) {
+        if ( !isset($data) or empty($data) ) return '';
+        if ( is_numeric($data) ) return $data;
+
+        $non_displayables = array(
+            '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
+            '/%1[0-9a-f]/',             // url encoded 16-31
+            '/[\x00-\x08]/',            // 00-08
+            '/\x0b/',                   // 11
+            '/\x0c/',                   // 12
+            '/[\x0e-\x1f]/'             // 14-31
+        );
+        foreach ( $non_displayables as $regex )
+            $data = preg_replace( $regex, '', $data );
+        $data = str_replace("'", "''", $data );
+        return $data;
+    }	
+	
+	
 
 }
