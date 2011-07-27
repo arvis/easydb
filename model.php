@@ -1,25 +1,31 @@
 <?php
+//require 'basicmodel.php';
 require 'simpledb.php';
+require 'pdo_model.php';
 
+
+/**
+EasyDb model class.
+Aimed to be database agnostic, but now uses Amazon SimpleDb. 
+All basic selects will be generated on BasicModel class.
+*/
 
 class EasyDbModel {
 
 	private $sdb;
+	
 	private $fields_domain="easydb_fields";
 	private $data_domain="easydb_data";
 	private $tables_domain="easydb_tables";
 	private $users_domain="easydb_users";
+	public $dbType="simpleDB";
 	
 	private $user_data;
 	
 	
-	function __construct($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in="") {
-		$this->sdb= new SimpleDb($data_domain_in);
-		
-		if (!empty($tables_domain_in)) $this->tables_domain=$tables_domain_in;
-		if (!empty($fields_domain_in)) $this->fields_domain=$fields_domain_in;
-		if (!empty($data_domain_in)) $this->data_domain=$data_domain_in;
-		if (!empty($users_domain_in)) $this->users_domain=$users_domain_in;
+	//function __construct($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in="") {
+	function __construct() {
+		$this->sdb= new SimpleDb();
 	}
 
 	function setDomains($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in=""){
@@ -164,13 +170,30 @@ class EasyDbModel {
 	
 	function insertRow($uid, $row_data){
 		$row_id=uniqid();
-		$result=$this->editRow($uid,$row_id, $row_data);
+		$row_data['id']=$row_id;
+		$row_data['uid']=$uid;
+		
+		$result=$this->editRow($row_id,$row_data);
 		return $result;
 	}
 	
-	function editRow($uid,$row_id,$row_data){
-		$row_data['id']=$row_id;
-		$row_data['uid']=$uid;
+	/**
+	edit table row 
+	*/
+	
+	function editRow($row_id,&$row_data){
+		
+		if (!isset($row_data['id']) || $row_data['id']==0){
+			$row_id=uniqid();
+			$row_data['id']=$row_id;
+			// $row_data['uid']=$this->uid;
+		}
+		else {
+			$row_id=$row_data['id'];
+		}
+		
+		//TODO: maybe we need to check for some fields to be present?
+	
 		$result=$this->sdb->editItem($row_id,$row_data,$this->data_domain);
 		return $result;
 	}
@@ -198,6 +221,7 @@ class EasyDbModel {
         return $data;
     }	
 	
+
 	
 
 }

@@ -7,8 +7,7 @@ class SimpleDb {
 	private $sdb;
 	private $domain_name="easydb_data";
 
-	function __construct($in_domain) {
-		$this->domain_name=$in_domain;
+	function __construct() {
 	
 		$this->sdb = new AmazonSDB();
 		//$domain_name=$domain;
@@ -22,9 +21,9 @@ class SimpleDb {
 		return $this->$domain_name;
 	}
 
-	public function selectItem($item_name,$domain=""){
+	public function selectItem($item_name,$domain){
 		try {
-			if ($domain=="") $domain=$this->domain_name;
+			//if ($domain=="") $domain=$this->domain_name;
 		
 			$attrs=$this->sdb->getAttributes($domain,$item_name);
 			$data_arr=array();
@@ -46,6 +45,8 @@ class SimpleDb {
 	public function customSelect($sql){
 		try {
 			$response = $this->sdb->select($sql);
+			
+			//if (!$response) return false;
 			
 			$data_arr=array();
 			$itm=$response->body->SelectResult->Item;
@@ -73,34 +74,32 @@ class SimpleDb {
 	
 	}
 	
-/*	
-	// TODO: is there any need for special insert function for simpleDB?
-	
-	public function insert_item($item_name,$attributes){
-		//$putAttributesRequest["make"] = array("value" => "BMW");
-		$sdb->putAttributes($this->domain_name,$item_name,$attributes);
-		if ($response->isOK()) 
-			return 1;
-		else
-			return -1;
+	public function insertItem($user_data,$domain){
+		$row_id=uniqid();
+		$user_data['id']=$row_id;
+		$result=$this->editItem($row_id,$user_data,$domain);
+		
+		return $result;
 	}
-*/	
 	
-	public function editItem($item_name,$user_data,$domain="" ){
+	public function editItem($item_name,$user_data,$domain){
 		try {
 		$attributes=array();
 		$response=$this->convertUserData($user_data,$attributes);
-		if ($domain=="") $domain=$this->domain_name;
+		//if ($domain=="") $domain=$this->domain_name;
 		
 			if ($response==-1){
 				return -1;
 			}
 		
 		$response=$this->sdb->put_attributes($domain,$item_name,$attributes,true);
-		if ($response->isOK()) 
+		
+		if ($response->isOK() ) {
 			return 1;
-		else
+		}	
+		else{
 			return -1;
+		}	
 			
 		} catch (Exception $e) {
 			$err_msg='edit_item exception: '.$e->getMessage();

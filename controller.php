@@ -22,7 +22,7 @@ class EasyDbController {
 	}
 	
 	
-	function saveTableData($table_data,$table_fields, $uid){
+	function saveTableConfig($table_data,$table_fields, $uid){
 	
 		//$table_id=0;
 		$table_id=$table_data['id'];
@@ -80,6 +80,51 @@ class EasyDbController {
 		return $result_arr;
 	}
 	
+	function setTableData($grid_data, &$result_arr){
+		
+		// converting from JSON
+		
+		// if brace is not a first char, add to start and finish to simulate array
+		//$brace_pos = strpos($grid_data, "[");
+		$brace_pos = substr(trim($grid_data), 0, 1);
+
+		//echo "brace is - $brace_pos <br>" ;
+		
+		if ($brace_pos != "[") {
+			$grid_data="[".$grid_data."]";
+		}
+		
+		$data_arr=json_decode($grid_data,true);
+		
+		//looping through data and setting 
+		$success_arr=array();
+		$result_arr=array();
+		$result;
+		
+		foreach ($data_arr as &$field) {
+			$result=$this->model->editRow($field['id'],$field);
+			array_push($success_arr,$result);
+			$field['success']=$result;
+		}
+		
+		$result_arr['data']=$data_arr;
+		
+		// searches if data update results were successfull or not
+		if (in_array(0, $success_arr)) {
+			$result_arr['success']=false;
+			$result_arr['message']="Some data failed to save.";
+			return 0;
+		}
+		else{
+			$result_arr['success']=true;
+			$result_arr['message']="Data save successfully.";
+		} 
+		
+		
+		return 1;
+
+	
+	}
 	
 
 	function setTableFields($table_id,$field_arr){
@@ -92,7 +137,7 @@ class EasyDbController {
 			$field['uid']=$this->uid;
 
 			$result=$this->model->editTableField($table_id,$field /*,$field['id'],$field['data_index'],$field['header'], $field['field_type']*/);
-			error_log("setTableFields result is ".$result);
+			//error_log("setTableFields result is ".$result);
 			
 		}
 		return $result;

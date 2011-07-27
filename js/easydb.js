@@ -1,6 +1,15 @@
 Ext.onReady(function(){
     Ext.QuickTips.init();
 	var tb = new Ext.Toolbar({width: 650});
+	
+	var fieldPropsWindow;
+	var gridPropsWindow;
+	var col_count=1;
+	var gridPanel;	
+	var formPanel;
+	var tableListMenu;
+	var grid_cols=[];
+	var tableId;
 
 	var store;
 	
@@ -10,50 +19,92 @@ Ext.onReady(function(){
     });
 	
 	var storeFields=[];
+	var gridMode="design"; //sets mode to design or grid //TODO: make as enum
 	
 
 	function setJsonStore(table_id){
-		//FIXME: for testing
-		var store_params={grid_action:'get_table_data',table_id:table_id};
-		// FIXME: move to another location 
+/*	
+		var reader = new Ext.data.JsonReader({
+			successProperty: 'success',
+			idProperty: 'id',
+			root: 'data',
+			fields:storeFields
+		}
+		);
+
+		// The new DataWriter component.
+		var writer = new Ext.data.JsonWriter({
+			encode: true,
+			autoLoad:false,
+			writeAllFields: false
+		});
+	
+		var proxy = new Ext.data.HttpProxy({
+			api: {
+				read : 'view.php?grid_action=get_table_data',
+				create : 'view.php?grid_action=set_table_data',
+				update: 'view.php?grid_action=set_table_data',
+				destroy: 'view.php?grid_action=set_table_data'
+			}
+		});
+	
+	
+	
+		var store_params={table_id:table_id};
+		store = new Ext.data.JsonStore({
+				idProperty: 'id',
+				id: 'main_grid',
+				proxy: proxy,
+				reader: reader,
+				writer: writer,  // <-- plug a DataWriter into the store just as you would a Reader
+				autoSave: true, // <-- false would delay executing create, update, destroy requests until specifically told to do so with some [save] buton.
+				
+				baseParams:	store_params,
+				autoLoad:false,
+				autoSave: false,
+				//fields: [{name: 'id'}]
+				//fields: storeFields
+		});	
+*/		
+
+		//var store_params={grid_action:'get_table_data',table_id:table_id};
+		var store_params={table_id:table_id};
 		
-		//grid_cols=[];
+		// The new DataWriter component.
+		var writer = new Ext.data.JsonWriter({
+			encode: true,
+			autoLoad:false,
+			writeAllFields: false
+		});
+		
+		var proxy = new Ext.data.HttpProxy({
+			api: {
+				read : 'view.php?grid_action=get_table_data',
+				create : 'view.php?grid_action=set_table_data',
+				update: 'view.php?grid_action=set_table_data',
+				destroy: 'view.php?grid_action=set_table_data'
+			}
+		});
+		
+		
+
 		store = new Ext.data.JsonStore({
 				url:  'view.php',
 				root: 'data',
 				idProperty: 'id',
 				baseParams:	store_params,
-				autoLoad:false,
 				
+				writer: writer, 
+				proxy: proxy,
+				
+				autoLoad:false,
+				autoSave: false,
 				//fields: [{name: 'id'}]
 				fields: storeFields
 		});	
 		
 		return true;
 	}
-/*
-	setJsonStore();
-	store.load();
-	store.on('load', function(){console.log("new count is "+store.getCount()); gridPanel.doLayout();});
-*/
-	
-
-	var fieldPropsWindow;
-	var gridPropsWindow;
-	var col_count=1;
-	var gridPanel;	
-	var formPanel;
-	var tableListMenu;
-	
-	var grid_cols=[
-/*	
-		{
-		header:'id',
-		dataIndex:'id',
-		}
-*/		
-        ];
-	
 	
 
 	Ext.override(Ext.data.Store,{
@@ -417,8 +468,12 @@ Ext.onReady(function(){
 	
 	
 	function addRow(){
-		var u = new store.recordType({});
+		var u = new store.recordType({table_id:tableId});
+		
+		gridPanel.stopEditing();
 		store.insert(gridPanel.getStore().getCount(), u);
+		gridPanel.startEditing(gridPanel.getStore().getCount()-1, 3);
+		
 	}
 	
 	var dataViewType=new Ext.menu.Menu({
@@ -514,15 +569,15 @@ Ext.onReady(function(){
 				if(responseJSON['success']){
 					var data=responseJSON['data'];
 					
-					grid_cols=[{name:'id',dataIndex:'id'},{name:'uid',dataIndex:'uid'} ];
-					storeFields=[{name:'id'},{name:'uid'} ];
+					grid_cols=[{name:'id',dataIndex:'id',header:'id'},{name:'table_id',dataIndex:'table_id', defaultValue:table_id,header:'table_id'},{name:'uid',dataIndex:'uid',header:'uid'} ];
+					storeFields=[{name:'id'},{name:'table_id', defaultValue:table_id},{name:'uid'} ];
 					
 					//grid_field=getFieldEditor(field_type);
 
 					
 					for(var prop in data) {
 						if(data.hasOwnProperty(prop)){
-							console.log("col data is "+data[prop]['header']+" id " +data[prop]['id']);
+							//console.log("col data is "+data[prop]['header']+" id " +data[prop]['id']);
 							grid_cols.push({name:data[prop]['id'], dataIndex:data[prop]['id'], editor:getFieldEditor(data[prop]['field_type']), header:data[prop]['header'] });
 							storeFields.push({name:data[prop]['id'], type: data[prop]['field_type']});
 						}	
@@ -617,21 +672,31 @@ Ext.onReady(function(){
 
 	function saveData(){
 		//saving grid configuration, if in design mode
-		onGridColumnSave(gridPanel);
+		if (gridMode=="desing")
+			onGridColumnSave(gridPanel);
 		//saving grid data
 		
-		
-	
+		saveJsonStore();
 	}
+	
+	function saveJsonStore(){
+		console.log("start saveJsonStore");
+		store.save();
+	}
+
+	
+	
 	
 	
 
 	function onDesignViewClick(){
 		changeView("design");
+		gridMode="design";
 	}
 		
 	function onGridViewClick(){
 		changeView("grid");
+		gridMode="view";
 	}
 	
 	function changeView(view_type){
@@ -748,19 +813,24 @@ Ext.onReady(function(){
 		
 		
 	function onTableListClick(local_menu,menuItem, e){
-		var tableId=menuItem.getItemId();
+		table_id=menuItem.getItemId();
 		
 		
 		//TODO: prevent continuing event from handlers
 		// if this is not table names, do nothing
-		if (tableId=="start_page" || tableId=="new_table" ) return;
+		if (table_id=="start_page" || table_id=="new_table" ) 
+			return;
+		else
+			tableId=table_id;
+		
+		
 	
 		//console.log("onTableListClick "+ menuItem.getItemId());
 		
 		//reseting grid
 		//TODO: move it to another function
 		
-		
+/*		
 		var store_params={grid_action:'get_table_data',table_id:tableId};
 		
 		//grid_cols=[];
@@ -775,9 +845,9 @@ Ext.onReady(function(){
 				//fields: [{name: 'id'},{name: '4e2b228b73f07'}]
 				fields: []
 			});	
-
-		
 		grid_cols=[];
+*/		
+		
 		getTableFields(tableId);
 
 		

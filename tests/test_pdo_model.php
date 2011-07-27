@@ -7,11 +7,15 @@ require BASE_DIR.'/model.php';
 
 require '../../simplephptest/basictest.php';
 
+//TODO: later enable in model.php
+require BASE_DIR.'/pdo_model.php';
 
-class TestSimpleDb{
+
+class TestPDOModel{
 	private $sdb; 
 	function __construct() {
-		$this->sdb= new SimpleDb();
+		$this->sdb= new PDOModel();
+		//CREATE TABLE easydb_tables (id INTEGER PRIMARY KEY ASC, uid CHAR(255), table_header CHAR(255), table_id CHAR(255));
 	}
 	
 	//TODO start and end functions that create and delete test domain
@@ -20,10 +24,9 @@ class TestSimpleDb{
 		$user_data=array();
 		$user_data['uid']=1;
 		$user_data['table_id']= 1;
-		$user_data['name']= 'janis';
-		$user_data['cost']= 10.25;
+		$user_data['table_header']= 'name'.uniqid();
 		
-		$response=$this->sdb->editItem('1_1',$user_data,"easydb_data_test");
+		$response=$this->sdb->insertItem($user_data,"easydb_tables");
 		//$user_data=$this->sdb->edit_item('1_1');
 				
 		return $response==1;
@@ -31,20 +34,19 @@ class TestSimpleDb{
 
 	function test_simple_edit(){
 		$user_data=array();
-		$user_data['uid']=1;
 		$user_data['id']=1;
+		$user_data['uid']=1;
 		$user_data['table_id']= 1;
-		$user_data['name']= 'janis un peteris';
-		$user_data['cost']= 10.25;
+		$user_data['table_header']= 'name edit '.uniqid();
 		
-		$response=$this->sdb->editItem(1,$user_data,"easydb_data_test");
+		$response=$this->sdb->editItem(1,$user_data,"easydb_tables");
 		//$user_data=$this->sdb->edit_item('1_1');
 	
 		return $response==1;
 	}
 	
 	function test_simple_select(){
-		$user_data=$this->sdb->selectItem('1',"easydb_data_test");
+		$user_data=$this->sdb->selectItem('1',"easydb_tables");
 		return $user_data['uid']=='1';
 	}
 	
@@ -52,32 +54,24 @@ class TestSimpleDb{
 		//TODO: not yet implemented
 		return false;
 	}
-
 }
 
-$tst1=new TestSimpleDb();
+$tst1=new TestPDOModel();
 $testing=new BasicTest();
 $testing->addClass($tst1);
 $testing->runTests();
 
-class TestBasicModel{
+/*
+class TestBasicModelSqlite{
 	private $model; 
 	function __construct() {
-		//$this->model= new EasyDbModel("easydb_tables_test","easydb_fields_test","easydb_data_test","easydb_users_test");
-		$this->model= new EasyDbModel();
-		$this->model->setDomains("easydb_tables_test","easydb_fields_test","easydb_data_test","easydb_users_test");
+		// 	function __construct($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in="") {
+		$this->model= new EasyDbModel("easydb_tables_test","easydb_fields_test","easydb_data_test","easydb_users_test");
 	}
 
 	
 //FIXME: really test if changes are there, for now testing is done only by judging from return values mostly
 	
-//FIXME: disabled until we will properly set up testing enviroment, works for now
-/*	
-	function testCreateTable(){
-		$result=$this->model->createTable("my table",1);
-		return $result==1;
-	}
-*/	
 	function testEditTable(){
 		$table_name="my test table ".uniqid();
 		$table_id=1;
@@ -142,10 +136,10 @@ class TestBasicModel{
 	
 	function testEditRow(){
 		$row_data=array();
-		$row_data['id']=1;
+		
 		$row_data['value']="test edited ".uniqid();
+		$result=$this->model->editRow(1,1,$row_data);
 		$row_data['table_id']=1;
-		$result=$this->model->editRow(1,$row_data);
 
 		return $result==1;
 	}
@@ -171,9 +165,9 @@ class TestBasicModel{
 	
 }
 
-$tst2=new TestBasicModel();
-$testing2=new BasicTest();
-$testing2->addClass($tst2);
-$testing2->runTests();
-
+$tst3=new TestBasicModelSqlite();
+$testing3=new BasicTest();
+$testing3->addClass($tst3);
+$testing3->runTests();
+*/
 

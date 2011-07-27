@@ -21,7 +21,7 @@ class TestEasyDbController{
 	function testSetTable(){
 
 		$table_data=array();
-		$table_data['table_name']="grid test";
+		$table_data['grid_name']="grid test";
 		
 		$table_id=1;
 		// setTable($table_data,&$table_id){
@@ -50,6 +50,60 @@ class TestEasyDbController{
 		$result=$this->controller->setTableFields($table_id,$field_arr);
 		return $result==1;
 	}
+	
+	
+	
+	function testSetTableData(){
+		$json_data='{"4e2b228b73f07":"testva","id":"1234"}';
+		$data_arr=array();
+		$result=$this->controller->setTableData($json_data,$data_arr);
+		
+		//print_r($data_arr);
+		
+		return $data_arr['data'][0]['id']=='1234';
+	}
+	
+	function testSetTableData_insert(){
+		$json_data='{"4e2b228b73f07":"testva"}';
+		$data_arr=array();
+		$result=$this->controller->setTableData($json_data,$data_arr);
+		
+		return strval($data_arr['data'][0]['uid'])=='1';
+	}
+
+	
+	function testSetTableData_multiple_values(){
+		$json_data='[{"4e2b228b73f07":"testva","id":"1234"},{"4e2b228b73f07":"testva","id":"1"}]';
+		$data_arr=array();
+		$result=$this->controller->setTableData($json_data,$data_arr);
+		
+		return strval($data_arr['data'][1]['id'])=='1';
+	}
+	
+	
+	
+	function testGetTableFields(){
+		$table_id=1;
+		$result=$this->controller->getTableFields($table_id);
+		//print_r($result);
+		return $result['1']['table_id']==1;
+	
+	}
+	
+	
+	function testGetTableData(){
+		$table_id=1;
+		$result=$this->controller->getTableData($table_id);
+		//print_r($result);
+		
+		//echo $result['1']['table_id'];
+		
+		return $result['1']['table_id']==1;
+	
+	
+	}
+	
+	
 }
 
 
