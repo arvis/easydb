@@ -1,7 +1,5 @@
 <?php
-//require 'basicmodel.php';
-require 'simpledb.php';
-require 'pdo_model.php';
+require 'basicmodel.php';
 
 
 /**
@@ -18,14 +16,21 @@ class EasyDbModel {
 	private $data_domain="easydb_data";
 	private $tables_domain="easydb_tables";
 	private $users_domain="easydb_users";
-	public $dbType="simpleDB";
+	
+	//public $dbType="simpledb";
+	public $dbType="sqlite";
+	public $dbName="data.db";
 	
 	private $user_data;
 	
 	
 	//function __construct($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in="") {
-	function __construct() {
-		$this->sdb= new SimpleDb();
+	function __construct($dbType="simpledb") {
+		//$this->sdb= new SimpleDb();
+		
+		//$this->dbType=$dbType;
+		
+		$this->sdb= new BasicModel($this->dbType, $this->dbName);
 	}
 
 	function setDomains($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in=""){
@@ -121,6 +126,8 @@ class EasyDbModel {
 		$user_data['id']=$field_id;
 		$user_data['table_id']=$table_id;
 		
+		//print_r($user_data);
+		
 		$result=$this->sdb->editItem($field_id,$user_data,$this->fields_domain);
 		
 		return $result;
@@ -138,28 +145,59 @@ class EasyDbModel {
 	}
 	
 	function getTableList($uid){
-		$sql="SELECT * FROM `".$this->tables_domain."` where uid='$uid'";
-		$result=$this->sdb->customSelect($sql);
+		//$sql="SELECT * FROM `".$this->tables_domain."` where uid='$uid'";
+		//$result=$this->sdb->customSelect($sql);
+		
+		$where_arr=array();
+		$where_arr['uid']=$uid;
+		$result=$this->sdb->selectItems($this->tables_domain,$where_arr);
+		//print_r($result);
+		
 		return $result;
 	}
 	
 	function getTableFields($table_id){
-		//SELECT id,field_caption,field_type FROM `easydb_fields_test` where table_id='1'
+/*	
 		$sql="SELECT * FROM `".$this->fields_domain."` where table_id='$table_id'";
 		$result=$this->sdb->customSelect($sql);
 		return $result;
+*/
+
+		//TODO: implement also search for id
+
+		$where_arr=array();
+		$where_arr['table_id']=$table_id;
+		$result=$this->sdb->selectItems($this->fields_domain,$where_arr);
+		
+		
+		return $result;
+		
+		
 	}
 	
 	//function selectAllFromTable($var_name, $table_id){
 	function selectAllFromTable($table_id,$uid){
 	
 		//TODO: prevent SQL injections
+		// TODO: maybe need to set uid checks
 		// escape characters
 		$table_id=$this->custom_escape_string($table_id);
 		
-		//$sql="SELECT * FROM `".$this->data_domain."` where $var_name='$table_id'";
-		$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
-		$result=$this->sdb->customSelect($sql);
+		$where_arr=array();
+		$table_name;
+		if ($this->sdb->getDbType()=="simpledb"){
+			$where_arr['table_id']=$table_id;
+			$table_name=$this->data_domain;
+		}
+		else {
+			//$table_name=$table_id;
+			$table_name=$table_id;
+		
+		}
+		
+		//$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
+		$result=$this->sdb->selectItems($table_name,$where_arr);
+		
 		return $result;
 	}
 
@@ -168,12 +206,14 @@ class EasyDbModel {
 		return $result;
 	}
 	
-	function insertRow($uid, $row_data){
-		$row_id=uniqid();
-		$row_data['id']=$row_id;
+	function insertRow(&$row_data,$uid,$table_id){
+
 		$row_data['uid']=$uid;
-		
-		$result=$this->editRow($row_id,$row_data);
+		$table_name=$this->data_domain;
+		if ($this->sdb->getDbType()!="simpledb")
+			$table_name=$table_id;
+			
+		$result=$this->sdb->insertItem($row_data,$table_name);
 		return $result;
 	}
 	
@@ -181,20 +221,23 @@ class EasyDbModel {
 	edit table row 
 	*/
 	
-	function editRow($row_id,&$row_data){
-		
+	function editRow($row_id,&$row_data,$table_id){
+		//TODO: maybe need to delete this?
 		if (!isset($row_data['id']) || $row_data['id']==0){
 			$row_id=uniqid();
 			$row_data['id']=$row_id;
-			// $row_data['uid']=$this->uid;
 		}
 		else {
 			$row_id=$row_data['id'];
 		}
 		
 		//TODO: maybe we need to check for some fields to be present?
+		
+		$table_name=$this->data_domain;
+		if ($this->sdb->getDbType()!="simpledb") 
+			$table_name=$table_id;
 	
-		$result=$this->sdb->editItem($row_id,$row_data,$this->data_domain);
+		$result=$this->sdb->editItem($row_id,$row_data,$table_name);
 		return $result;
 	}
 	

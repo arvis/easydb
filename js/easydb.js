@@ -525,8 +525,8 @@ Ext.onReady(function(){
 		};
 		
 		var grid_data=Ext.encode({id:1,grid_name:'my grid'});
-
-		var grid_params={columns:coldDataJSON, grid_action:'set_table_data', grid_data:grid_data};
+		// set_table_config
+		var grid_params={columns:coldDataJSON, grid_action:'set_table_config', grid_data:grid_data};
 		
 		sendToServer(grid_params,success_funct,null);
 		
@@ -575,11 +575,21 @@ Ext.onReady(function(){
 					//grid_field=getFieldEditor(field_type);
 
 					
+					var field_name="";
 					for(var prop in data) {
 						if(data.hasOwnProperty(prop)){
 							//console.log("col data is "+data[prop]['header']+" id " +data[prop]['id']);
-							grid_cols.push({name:data[prop]['id'], dataIndex:data[prop]['id'], editor:getFieldEditor(data[prop]['field_type']), header:data[prop]['header'] });
-							storeFields.push({name:data[prop]['id'], type: data[prop]['field_type']});
+							field_name="";
+							// field name are defined only in sql databases simpledb have other methods than creating tables
+							if (data[prop]['field_name']==undefined){
+								field_name=data[prop]['id'];
+							}
+							else {
+								field_name=data[prop]['field_name'];
+							}
+							//console.log("adding field "+field_name+"  "+type: data[prop]['field_type']);
+							grid_cols.push({name:field_name, dataIndex:field_name, editor:getFieldEditor(data[prop]['field_type']), header:data[prop]['header'] });
+							storeFields.push({name:field_name, type: data[prop]['field_type']});
 						}	
 					}
 					
@@ -672,6 +682,7 @@ Ext.onReady(function(){
 
 	function saveData(){
 		//saving grid configuration, if in design mode
+		console.log("grid mode is "+gridMode);
 		if (gridMode=="desing")
 			onGridColumnSave(gridPanel);
 		//saving grid data
@@ -814,7 +825,7 @@ Ext.onReady(function(){
 		
 	function onTableListClick(local_menu,menuItem, e){
 		table_id=menuItem.getItemId();
-		
+		// var table_name=menuItem.getItemText();
 		
 		//TODO: prevent continuing event from handlers
 		// if this is not table names, do nothing
@@ -822,31 +833,6 @@ Ext.onReady(function(){
 			return;
 		else
 			tableId=table_id;
-		
-		
-	
-		//console.log("onTableListClick "+ menuItem.getItemId());
-		
-		//reseting grid
-		//TODO: move it to another function
-		
-/*		
-		var store_params={grid_action:'get_table_data',table_id:tableId};
-		
-		//grid_cols=[];
-		store = new Ext.data.JsonStore({
-				url:  'view.php',
-				root: 'data',
-				idProperty: 'id',
-				baseParams:	store_params,
-				autoLoad:false,
-				
-				//fields: [{name: 'id'}]
-				//fields: [{name: 'id'},{name: '4e2b228b73f07'}]
-				fields: []
-			});	
-		grid_cols=[];
-*/		
 		
 		getTableFields(tableId);
 

@@ -11,6 +11,7 @@ class EasyDbController {
 	
 	function __construct($uid) {
 		// 	function __construct($tables_domain_in="", $fields_domain_in="",$data_domain_in="",$users_domain_in="") {
+		// $this->model= new EasyDbModel();
 		$this->model= new EasyDbModel();
 		$this->uid=$uid;
 		
@@ -41,7 +42,6 @@ class EasyDbController {
 			error_log("cannot save table config data.");
 			return -1;
 		}
-		
 		
 		$result=$this->setTableFields($table_id,$table_fields);
 		
@@ -80,7 +80,7 @@ class EasyDbController {
 		return $result_arr;
 	}
 	
-	function setTableData($grid_data, &$result_arr){
+	function setTableData($grid_data,$table_id, &$result_arr){
 		
 		// converting from JSON
 		
@@ -102,7 +102,12 @@ class EasyDbController {
 		$result;
 		
 		foreach ($data_arr as &$field) {
-			$result=$this->model->editRow($field['id'],$field);
+			if (!isset($field['uid'])) $field['uid']=$this->uid;
+			if (!isset($field['id'])) 
+				$result=$this->model->insertRow($field,$this->uid,$table_id);
+			else
+				$result=$this->model->editRow($field['id'],$field,$table_id);
+				
 			array_push($success_arr,$result);
 			$field['success']=$result;
 		}

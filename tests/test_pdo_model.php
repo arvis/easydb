@@ -8,7 +8,7 @@ require BASE_DIR.'/model.php';
 require '../../simplephptest/basictest.php';
 
 //TODO: later enable in model.php
-require BASE_DIR.'/pdo_model.php';
+//require BASE_DIR.'/pdo_model.php';
 
 
 class TestPDOModel{

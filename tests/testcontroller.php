@@ -56,7 +56,8 @@ class TestEasyDbController{
 	function testSetTableData(){
 		$json_data='{"4e2b228b73f07":"testva","id":"1234"}';
 		$data_arr=array();
-		$result=$this->controller->setTableData($json_data,$data_arr);
+		$table_id="5";
+		$result=$this->controller->setTableData($json_data,$table_id,$data_arr);
 		
 		//print_r($data_arr);
 		
@@ -66,7 +67,8 @@ class TestEasyDbController{
 	function testSetTableData_insert(){
 		$json_data='{"4e2b228b73f07":"testva"}';
 		$data_arr=array();
-		$result=$this->controller->setTableData($json_data,$data_arr);
+		$table_id="5";
+		$result=$this->controller->setTableData($json_data,$table_id,$data_arr);
 		
 		return strval($data_arr['data'][0]['uid'])=='1';
 	}
@@ -75,7 +77,8 @@ class TestEasyDbController{
 	function testSetTableData_multiple_values(){
 		$json_data='[{"4e2b228b73f07":"testva","id":"1234"},{"4e2b228b73f07":"testva","id":"1"}]';
 		$data_arr=array();
-		$result=$this->controller->setTableData($json_data,$data_arr);
+		$table_id="5";
+		$result=$this->controller->setTableData($json_data,$table_id,$data_arr);
 		
 		return strval($data_arr['data'][1]['id'])=='1';
 	}

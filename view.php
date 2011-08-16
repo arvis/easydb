@@ -51,7 +51,7 @@ class EasyDbView {
 			$this->getTableFields();
 		
 		}
-		else if ($action=="set_table_fields"){
+		else if ($action=="set_table_config"){
 			$this->set_table_config();
 		}
 		else {
@@ -112,12 +112,11 @@ class EasyDbView {
 	
 	}
 	
-	
-	
 	function setTableData(){
 		$grid_data_json=$_POST['data'];
+		$table_id=$_POST['table_id'];
 		$result_arr=array();
-		$result=$this->controller->setTableData($grid_data_json,$result_arr);
+		$result=$this->controller->setTableData($grid_data_json,$table_id,$result_arr);
 		
 		echo json_encode($result_arr);
 		
@@ -135,10 +134,17 @@ class EasyDbView {
 	function set_table_config(){
 	
 		$columns_json=$_POST['columns'];
+		$grid_data_json=$_POST['grid_data'];
 		
+		//echo "start set_table_config <br>";
 		//TODO: prevent injections
 		
 		$columns=json_decode($columns_json,true);
+		$grid_data=json_decode($grid_data_json,true);
+		
+		//print_r($grid_data);
+		//print_r($columns);
+		//die();
 		
 		// if no column data go away
 		if (empty($columns) || !isset($columns) ){

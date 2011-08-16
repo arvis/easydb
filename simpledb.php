@@ -42,6 +42,35 @@ class SimpleDb {
 		}
 	}
 	
+	public function selectItems($domain_name, $where_arr,$fields_arr=false){
+		//		//$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
+		
+		$sql="SELECT * FROM `".$domain_name."` ";
+		
+		if ($where_arr){
+			// TODO: better way to genereate where statements
+			$sql_where=" where ";
+
+			$i=1;
+			foreach($where_arr as $key=>$value){
+				if ($i>1) 
+					$sql_where .= " AND $key='$value'";
+				else
+					$sql_where .= " $key='$value'";
+					
+				$i++;
+			}
+			$sql.=$sql_where;
+		}
+	
+		$result=$this->customSelect($sql);
+		// echo "selectItems is $sql <br> ";
+		// print_r($result);
+		return $result;
+		
+		
+	}
+	
 	public function customSelect($sql){
 		try {
 			$response = $this->sdb->select($sql);
@@ -74,7 +103,8 @@ class SimpleDb {
 	
 	}
 	
-	public function insertItem($user_data,$domain){
+	public function insertItem(&$user_data,$domain){
+	
 		$row_id=uniqid();
 		$user_data['id']=$row_id;
 		$result=$this->editItem($row_id,$user_data,$domain);

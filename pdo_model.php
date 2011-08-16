@@ -12,18 +12,19 @@ class PDOModel {
 
 	private $dbName="easydb_test.db";
 	private $db;
+	private $lastError;
 	
 	// TODO: configure so I can set any database as PDO
 	function __construct($dbname_in="",$dbtype="sqlite",$connection_string=""){
 		try{
-		
-			if (empty($dbname_in))
+
+			if (!empty($dbname_in))
 				$this->dbName=$dbname_in;
 		
 			//$dbh = new PDO('mysql:host=localhost;dbname=test', $user, $pass, array(PDO::ATTR_PERSISTENT => true));
 		
-			//$this->db=new PDO("sqlite:".$this->dbName);  
-			$this->db=new PDO("sqlite:easydb_test.db");  
+			$this->db=new PDO("sqlite:".$this->dbName);  
+			//$this->db=new PDO("sqlite:easydb_test.db");  
 				
 		}  
 		catch(PDOException $e) {  
@@ -39,7 +40,7 @@ class PDOModel {
 	public function selectItem($item_id,$table_name){
 		$where_arr=array('id'=>$item_id);
 		
-		$result=$this->selectData($where_arr,$table_name);
+		$result=$this->selectItems($table_name,$where_arr);
 		
 		if (sizeof($result)<1) return 0;
 		
@@ -47,7 +48,7 @@ class PDOModel {
 	}
 
 	public function selectAll($table_name){
-		$result=$this->selectData(false,$table_name);
+		$result=$this->selectItems($table_name,false);
 		return $result;
 	
 	}
@@ -57,9 +58,11 @@ class PDOModel {
 	
 	*/
 	
-	public function selectData($where_arr,$table_name){
+	//($domain_name, $where_arr,$fields_arr=array())
+	public function selectItems($table_name,$where_arr,$fields_arr=false){
+	
 		//$item_name
-		$sql="select * from $table_name";
+		$sql="select * from '$table_name'";
 		
 		// if where array is not set select all values
 		if ($where_arr){
@@ -112,7 +115,7 @@ class PDOModel {
 		$sql_values=substr($sql_values,0,-1);
 		$sql_fields=implode(array_keys($user_data),",");
 	
-		$sql="INSERT INTO $table_name ($sql_fields) values ($sql_values);";
+		$sql="INSERT INTO '$table_name' ($sql_fields) values ($sql_values);";
 		$result=$this->modifyData($sql,array_values($user_data),$results_arr);
 		return $result;
 	}
@@ -129,12 +132,17 @@ class PDOModel {
 			$sql_values .="$key=?,";
 			
 		}
+		
+		
+		//TODO: escape table name values
 		$sql_values=substr($sql_values,0,-1);
-		$sql="UPDATE $table_name set $sql_values where id=?;";
+		$sql="UPDATE '$table_name' set $sql_values where id=?;";
 		$values_arr=array_values($user_data);
 		array_push($values_arr,$item_id);
 		
 		$results_arr=array();
+
+		//echo "pdo editItem $sql <br> ";
 		$result=$this->modifyData($sql,$values_arr,$results_arr);
 		
 		return $result;
@@ -162,7 +170,10 @@ class PDOModel {
 			
 			if ($statement===false){
 				$err_msg="error occured";
-				print_r($this->db->errorInfo());
+				
+				// TODO: error message display to error log
+				//print_r($this->db->errorInfo());
+				$this->dbMessageToErrLog($this->db->errorInfo());
 				return -1;
 			}
 			else{
@@ -177,9 +188,26 @@ class PDOModel {
 			error_log($err_msg);   
 			return -1;
 		}
+		catch(Exception $e) {  
+			$err_msg="ERROR: modifyData  ".$e->getMessage();
+			error_log($err_msg);   
+			return -1;
+		}
+		
 
 	}
 	
+	/**
+	writes pdo error array to error logand stores it in last error
+	
+	*/
+	public function dbMessageToErrLog($err_arr){
+		$err_msg=implode(" - ", $err_arr);
+		echo "$err_msg <br>";
+		
+		error_log($err_msg);   
+		$this->lastError=$err_msg;
+	}
 
 
 }
