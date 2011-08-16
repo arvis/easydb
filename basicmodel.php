@@ -3,8 +3,13 @@
 //require 'simpledb.php';
 //FIXME: need to remove after moving to model
 
-require BASE_DIR.'/simpledb.php';
-require BASE_DIR.'/pdo_model.php';
+//require BASE_DIR.'/simpledb.php';
+//require BASE_DIR.'/pdo_model.php';
+
+require 'simpledb.php';
+require 'pdo_model.php';
+
+
 
 class BasicModel{
 	private $db;
@@ -22,6 +27,10 @@ class BasicModel{
 	
 	}
 	
+	public function getDbType(){
+		return $this->dbType;
+	}
+	
 	private function setupSimpleDb($dbOptions){
 		//TODO: set amazon uid and key if set
 		$this->db=new SimpleDb();
@@ -37,9 +46,7 @@ class BasicModel{
 			die("cannot connect to database - no dbName");
 			return;
 		}
-	
 		$this->db=new PDOModel($dbName);
-
 	}
 
 
@@ -53,7 +60,7 @@ class BasicModel{
 	
 	}
 	
-	function insertItem($edit_data,$domain){
+	function insertItem(&$edit_data,$domain){
 	
 		$result=$this->db->insertItem($edit_data,$domain);
 		return $result;
@@ -71,6 +78,31 @@ class BasicModel{
 		$result=$this->db->editItem($id,$edit_data,$domain);
 		return $result;
 	}
+	
+	function selectAll($table_name){
+		
+		// simpleDbWay of selecting data
+		//$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
+	
+		//$result=$this->db->editItem($id,$edit_data,$domain);
+		//return $result;
+	
+	}
+	
+	function select(){
+	
+	}
+	
+	function selectItems($table_name,$where_arr,$fields_arr=false){
+		$result=$this->db->selectItems($table_name,$where_arr,$fields_arr);
+		return $result;
+		
+		//$sql="SELECT * FROM `".$this->data_domain."` where table_id='$table_id'";
+	}
+	
+	
+	
+	
 
 
 }

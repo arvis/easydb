@@ -156,10 +156,19 @@ class TestBasicModel{
 		return $result['1']['table_id']=='1';
 	}
 	
+	function testGetTableFields(){
+		$result=$this->model->getTableFields(1);
+		
+		//TODO: better test results
+		return $result['1']['table_id']=='1';
+	}
+	
 	
 	function testGetTableColumnData(){
 		// get all columns for this table
 		$result=$this->model->getTableFields(1);
+		//print_r($result);
+		
 		return $result['1']['table_id']=='1';
 	}
 
@@ -175,5 +184,11 @@ $tst2=new TestBasicModel();
 $testing2=new BasicTest();
 $testing2->addClass($tst2);
 $testing2->runTests();
+
+$tst3=new TestBasicModel("sqlite");
+$testing3=new BasicTest();
+$testing3->addClass($tst3);
+$testing3->runTests();
+
 
 
