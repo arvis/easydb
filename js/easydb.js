@@ -10,6 +10,8 @@ Ext.onReady(function(){
 	var tableListMenu;
 	var grid_cols=[];
 	var tableId;
+	var gridTitle="My grid";
+	var gridId=0;
 
 	var store;
 	
@@ -274,6 +276,9 @@ Ext.onReady(function(){
 	
 	
 	function getGridViewGrid(grid_store){
+	
+		var cls=grid_cols;
+	
 		var gridView = new Ext.grid.EditorGridPanel({
 			store: grid_store,
 			columns:grid_cols ,
@@ -336,11 +341,19 @@ Ext.onReady(function(){
 				autoHeight:true,
 				defaults: {width: 230},
 				defaultType: 'textfield',
-				items: [{
+				items: [
+				
+					{
+						xtype:'hidden',
+						name: 'grid_id',
+						id: 'grid_id',
+						value:0,
+					},
+					{
 						fieldLabel: 'Table Name',
 						name: 'grid_name',
 						id: 'grid_name',
-						//value:field_name,
+						value:gridTitle,
 						allowBlank:false
 					}
 					]
@@ -355,13 +368,16 @@ Ext.onReady(function(){
 				autoHeight:true,
                 closeAction:'hide',
                 plain: true,
-				title: 'Field properties',
+				title: 'Table properties',
                 items: gridPropsPanel,
 
                 buttons: [{
                     text:'Ok',
                     handler: function(){
-					
+						gridTitle=gridPropsPanel.getForm().findField("grid_name").getValue(); 
+						//console.log("new grid title name is "+gridTitle);
+						onGridColumnSave(gridPanel);
+						gridPropsWindow.hide();
                     }
                 },{
                     text: 'Cancel',
@@ -494,7 +510,7 @@ Ext.onReady(function(){
 	//var menu = new Ext.menu.Menu({});
 	
 	function onGridColumnSave(grid_to_save){
-		console.log("start saving grid data");
+		//console.log("start saving grid data");
 		
 		//TODO: write unit tests for this option
 		var colModel=grid_to_save.getColumnModel();
@@ -502,6 +518,8 @@ Ext.onReady(function(){
 		var storeData=grid_to_save.getStore().fields;
 		
 		var columnConfigs=new Array();
+		if (colModel.getColumnCount()<1) return;
+
 		
 		for (var i=0;i<colModel.getColumnCount();i++){
 			var colData={};
@@ -511,20 +529,33 @@ Ext.onReady(function(){
 			colData['data_index']=colModel.getDataIndex(i);
 			colData['field_type']=storeData.items[i].type.type;
 			//TODO: setting additional data for columnd data
-			
 			columnConfigs.push(colData);
 			
 		}
 		
 		var coldDataJSON=Ext.encode(columnConfigs);
-		//console.log("JSON is "+coldDataJSON+" initial data is "+columnConfigs[0]['header'] );
+		console.log("JSON is "+coldDataJSON+" initial data is "+columnConfigs[0]['header'] );
 		
-		//sending columnd data to server
 		var success_funct=function(response, opts){
-		
+			//setting table id
+			//var ret_arr=Ext.decode(response);
+			var ret_arr = Ext.decode(response.responseText);
+
+			gridId=ret_arr['grid_id'];
+			
+			var curr_rec;
+			for (var i = 0; i < grid_to_save.getStore().getCount(); i++){
+				curr_rec=grid_to_save.getStore().getAt(i);
+				//curr_rec.set('table_id', gridId);
+				curr_rec.data['table_id'] = gridId; // updates record, but not the view
+				curr_rec.commit();
+			}			
+			
+			//sending columnd data to server
+			saveJsonStore();
 		};
 		
-		var grid_data=Ext.encode({id:1,grid_name:'my grid'});
+		var grid_data=Ext.encode({id:gridId,grid_name:gridTitle});
 		// set_table_config
 		var grid_params={columns:coldDataJSON, grid_action:'set_table_config', grid_data:grid_data};
 		
@@ -618,6 +649,8 @@ Ext.onReady(function(){
 
 	function getTableList(){
 		var success_funct=function(response, opts){
+			//console.log("response is "+ response);
+		
 			var responseJSON = Ext.decode(response.responseText);
 				
 				if(responseJSON['success']){
@@ -682,9 +715,14 @@ Ext.onReady(function(){
 
 	function saveData(){
 		//saving grid configuration, if in design mode
+		
 		console.log("grid mode is "+gridMode);
-		if (gridMode=="desing")
-			onGridColumnSave(gridPanel);
+		if (gridMode=="design"){
+			//if no columns are defined, do nothing
+			showGridPropsWindow();
+			return;
+		}	
+			
 		//saving grid data
 		
 		saveJsonStore();
@@ -835,26 +873,19 @@ Ext.onReady(function(){
 			tableId=table_id;
 		
 		getTableFields(tableId);
-
-		
 		//getTableData(tableId);
-
-		
 	} 	
 	
 	//setting on click event for table list
 	tableListMenu.on('click', onTableListClick);
 	
+	setJsonStore();
+	
 	gridPanel=getDesignViewGrid(store);
 	getTableList();	
 	
-	
 	formPanel=new Ext.form.FormPanel({frame:false,width:650});
 	formPanel.add(gridPanel);
-	
-	
-	
-	
 	
 	formPanel.render('main_grid');
 	tb.render('main_toolbar');

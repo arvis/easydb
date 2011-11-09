@@ -17,8 +17,8 @@ class EasyDbModel {
 	private $tables_domain="easydb_tables";
 	private $users_domain="easydb_users";
 	
-	//public $dbType="simpledb";
-	public $dbType="sqlite";
+	public $dbType="simpledb";
+	//public $dbType="sqlite";
 	public $dbName="data.db";
 	
 	private $user_data;
